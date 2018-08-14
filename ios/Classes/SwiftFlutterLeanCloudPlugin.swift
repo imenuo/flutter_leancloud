@@ -1,10 +1,10 @@
 import Flutter
 import UIKit
     
-public class SwiftFlutterLeancloudPlugin: NSObject, FlutterPlugin {
+public class SwiftFlutterLeanCloudPlugin: NSObject, FlutterPlugin {
   public static func register(with registrar: FlutterPluginRegistrar) {
     let channel = FlutterMethodChannel(name: "flutter_leancloud", binaryMessenger: registrar.messenger())
-    let instance = SwiftFlutterLeancloudPlugin()
+    let instance = SwiftFlutterLeanCloudPlugin()
     registrar.addMethodCallDelegate(instance, channel: channel)
   }
 

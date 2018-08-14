@@ -15,7 +15,7 @@ dependencies:
 flutter:
   plugin:
     androidPackage: com.imenuo.flutterleancloud
-    pluginClass: FlutterLeancloudPlugin
+    pluginClass: FlutterLeanCloudPlugin
 
   # To add assets to your plugin package, add an assets section, like this:
   # assets:

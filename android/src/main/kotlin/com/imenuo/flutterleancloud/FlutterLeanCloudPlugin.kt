@@ -6,12 +6,12 @@ import io.flutter.plugin.common.MethodChannel.Result
 import io.flutter.plugin.common.MethodCall
 import io.flutter.plugin.common.PluginRegistry.Registrar
 
-class FlutterLeancloudPlugin(): MethodCallHandler {
+class FlutterLeanCloudPlugin(): MethodCallHandler {
   companion object {
     @JvmStatic
     fun registerWith(registrar: Registrar): Unit {
       val channel = MethodChannel(registrar.messenger(), "flutter_leancloud")
-      channel.setMethodCallHandler(FlutterLeancloudPlugin())
+      channel.setMethodCallHandler(FlutterLeanCloudPlugin())
     }
   }
 

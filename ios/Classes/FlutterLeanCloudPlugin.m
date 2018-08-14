@@ -1,8 +1,8 @@
-#import "FlutterLeancloudPlugin.h"
+#import "FlutterLeanCloudPlugin.h"
 #import <flutter_leancloud/flutter_leancloud-Swift.h>
 
-@implementation FlutterLeancloudPlugin
+@implementation FlutterLeanCloudPlugin
 + (void)registerWithRegistrar:(NSObject<FlutterPluginRegistrar>*)registrar {
-  [SwiftFlutterLeancloudPlugin registerWithRegistrar:registrar];
+  [SwiftFlutterLeanCloudPlugin registerWithRegistrar:registrar];
 }
 @end
