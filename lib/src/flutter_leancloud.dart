@@ -32,7 +32,7 @@ class FlutterLeanCloud {
     if (method.startsWith('avIMClient_')) {
       String clientId = methodCall.arguments['_clientId'];
       AVIMClient client = await avIMClientGetInstance(clientId);
-      return await client.onMethodCall(methodCall);
+      return await client.onClientMethodCall(methodCall);
     }
 
     _logger.warning('missing handler for message: $methodCall');
