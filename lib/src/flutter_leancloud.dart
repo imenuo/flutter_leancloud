@@ -6,30 +6,40 @@ import 'package:logging/logging.dart';
 import './im.dart';
 
 class FlutterLeanCloud {
-  static const MethodChannel _channel =
-      const MethodChannel('flutter_leancloud');
   static final Logger _logger = Logger('FlutterLeanCloud');
+  static FlutterLeanCloud _instance;
+
+  final MethodChannel _channel;
 
   static Future<String> get platformVersion async {
-    final String version = await _channel.invokeMethod('getPlatformVersion');
-    return version;
+    return 'stub';
   }
 
-  static Future<void> initialize(String appId, String appKey) async {
+  FlutterLeanCloud._internal()
+      : _channel = const MethodChannel('flutter_leancloud') {
     _channel.setMethodCallHandler(_methodCall);
-    await _channel.invokeMethod('initialize', <String>[appId, appKey]);
   }
 
-  static Future<void> setDebugLogEnabled(bool enabled) async {
-    await _channel.invokeMethod('setDebugLogEnabled', enabled);
+  factory FlutterLeanCloud() {
+    if (_instance == null) _instance = FlutterLeanCloud._internal();
+    return _instance;
   }
 
-  static Future<AVIMClient> avIMClientGetInstance(String clientId) =>
+  static FlutterLeanCloud get() => new FlutterLeanCloud();
+
+  Future<AVIMClient> avIMClientGetInstance(String clientId) =>
       AVIMClient.getInstance(_channel, clientId);
 
-  static Future<dynamic> _methodCall(MethodCall methodCall) async {
+  Future<void> avIMClientRegisterMessageHandler() =>
+      AVIMClient.registerMessageHandler(_channel);
+
+  Future<dynamic> _methodCall(MethodCall methodCall) async {
     var method = methodCall.method;
-    if (method.startsWith('avIMClient_')) {
+    var args = methodCall.arguments;
+    if (method == 'avIMClient_messageHandler_onMessage') {
+      await AVIMClient.handleMessageHandlerOnMessage(args);
+      return null;
+    } else if (method.startsWith('avIMClient_')) {
       String clientId = methodCall.arguments['_clientId'];
       AVIMClient client = await avIMClientGetInstance(clientId);
       return await client.onClientMethodCall(methodCall);

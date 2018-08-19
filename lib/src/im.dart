@@ -8,8 +8,7 @@ class AVIMClient {
   final Logger _logger;
   final MethodChannel _channel;
   final String clientId;
-  SignatureFactory signatureFactory;
-  AVIMMessageHandler _messageHandler;
+  AVIMMessageHandler messageHandler;
   AVIMClientEventHandler clientEventHandler;
   AVIMConversationEventHandler conversationEventHandler;
 
@@ -24,6 +23,8 @@ class AVIMClient {
     return client;
   }
 
+  factory AVIMClient._fromCache(String clientId) => _cache[clientId];
+
   /// This should not be invoked directly,
   /// invoke `FlutterLeanCloud.avIMClientGetInstance()` instead.
   static Future<AVIMClient> getInstance(
@@ -32,56 +33,55 @@ class AVIMClient {
     return AVIMClient._internal(channel, clientId);
   }
 
+  static Future<void> registerMessageHandler(MethodChannel channel) async {
+    await channel.invokeMethod('avIMClient_registerMessageHandler');
+  }
+
+  static Future<void> unregisterMessageHandler(MethodChannel channel) async {
+    await channel.invokeMethod('avIMClient_unregisterMessageHandler');
+  }
+
+  static Future<void> handleMessageHandlerOnMessage(Map arguments) async {
+    final String clientId = arguments['clientId'];
+    final client = AVIMClient._fromCache(clientId);
+    if (client == null) return;
+    client._handleMessageHandlerOnMessage(arguments);
+  }
+
   Future<dynamic> _invoke(String method, [dynamic arguments]) =>
       _channel.invokeMethod('avIMClient_$method', arguments);
 
-  Future<void> open() async {
-    await _invoke('open', clientId);
-  }
-
-  Future<void> registerMessageHandler(AVIMMessageHandler handler) async {
-    _messageHandler = handler;
-    await _invoke('registerMessageHandler', clientId);
-  }
-
-  Future<void> unregisterMessageHandler() async {
-    await _invoke('unregisterMessageHandler', clientId);
-    _messageHandler = null;
-  }
-
   Future<List<AVIMConversation>> queryConversations(
     Iterable<String> conversationIds, {
-    bool isCompat = true,
+    bool isCompact = true,
     bool refreshLastMessage = true,
   }) async {
     List<Map> maps = await _invoke('queryConversations', {
       'clientId': clientId,
       'ids': conversationIds.toList(growable: false),
-      'isCompat': isCompat,
+      'isCompact': isCompact,
       'refreshLastMessage': refreshLastMessage,
     });
-    return maps.map((map) => AVIMConversation._fromMap(_channel, map)).toList();
+    return maps
+        .map((map) => AVIMConversation._fromMap(_channel, map, clientId))
+        .toList();
   }
 
   Future<AVIMConversation> getConversation(
     String conversationId, {
-    bool isCompat = true,
+    bool isCompact = true,
     bool refreshLastMessage = true,
   }) =>
       queryConversations(
         [conversationId],
-        isCompat: isCompat,
+        isCompact: isCompact,
         refreshLastMessage: refreshLastMessage,
-      ).then((list) => list.first);
+      ).then((list) => list.isEmpty ? null : list.first);
 
   Future<dynamic> onClientMethodCall(MethodCall methodCall) {
     final method = methodCall.method;
     final args = methodCall.arguments;
     switch (method) {
-      case 'avIMClient_signatureFactory_createSignature':
-        return _handleSignatureFactoryCreateSignature(args);
-      case 'avIMClient_messageHandler_onMessage':
-        return _handleMessageHandlerOnMessage(args);
       case 'avIMClient_clientEventHandler_onConnectionPaused':
         return _handleClientEventHandlerOnConnectionPaused(args);
       case 'avIMClient_clientEventHandler_onConnectionResumed':
@@ -94,25 +94,12 @@ class AVIMClient {
     }
   }
 
-  Future<Map> _handleSignatureFactoryCreateSignature(Map arguments) async {
-    if (this.signatureFactory == null) {
-      _logger.warning('missing signatureFactory');
-      throw PlatformException(
-        code: 'UNSET',
-        message: 'signatureFactory is not set',
-      );
-    }
-
-    var signature = await this
-        .signatureFactory
-        .createSignature(arguments['peerId'], arguments['watchIds']);
-
-    return signature._toMap();
-  }
-
   Future<void> _handleMessageHandlerOnMessage(Map arguments) async {
-    await _messageHandler?.onMessage(AVIMMessage._fromMap(arguments['message']),
-        AVIMConversation._fromMap(_channel, arguments['conversation']), this);
+    await messageHandler?.onMessage(
+        AVIMMessage._fromMap(arguments['message']),
+        AVIMConversation._fromMap(
+            _channel, arguments['conversation'], clientId),
+        this);
   }
 
   Future<void> _handleClientEventHandlerOnConnectionPaused(arguments) async {
@@ -125,34 +112,9 @@ class AVIMClient {
 
   Future<void> _handleConversationEventHandlerOnUnreadMessagesCountUpdated(
       args) async {
-    await conversationEventHandler?.onUnreadMessagesCountUpdated(
-        this, AVIMConversation._fromMap(_channel, args['conversation']));
+    await conversationEventHandler?.onUnreadMessagesCountUpdated(this,
+        AVIMConversation._fromMap(_channel, args['conversation'], clientId));
   }
-}
-
-class Signature {
-  final String signature;
-  final int timestamp;
-  final String nonce;
-  final List<String> signedPeerIds;
-
-  Signature({this.signature, this.timestamp, this.nonce, this.signedPeerIds});
-
-  Map _toMap() => {
-        'signature': this.signature,
-        'timestamp': this.timestamp,
-        'nonce': this.nonce,
-        'signedPeerIds': this.signedPeerIds,
-      };
-
-  @override
-  String toString() {
-    return 'Signature{signature: $signature, timestamp: $timestamp, nonce: $nonce, signedPeerIds: $signedPeerIds}';
-  }
-}
-
-abstract class SignatureFactory {
-  FutureOr<Signature> createSignature(String peerId, List<String> watchIds);
 }
 
 abstract class AVIMMessageHandler {
@@ -176,20 +138,22 @@ class AVIMConversation {
 
   final MethodChannel _channel;
   final String conversationId;
+  final String clientId;
 
   Set<String> members;
   AVIMMessage lastMessage;
   int lastMessageAt;
   int unreadMessagesCount;
 
-  AVIMConversation._init(this._channel, this.conversationId);
+  AVIMConversation._init(this._channel, this.conversationId, this.clientId);
 
   factory AVIMConversation._internal(
-      MethodChannel channel, String conversationId) {
+      MethodChannel channel, String conversationId, String clientId) {
     var conversation = _cache[conversationId];
     if (conversation != null) return conversation;
 
-    conversation = new AVIMConversation._init(channel, conversationId);
+    conversation =
+        new AVIMConversation._init(channel, conversationId, clientId);
     _cache[conversationId] = conversation;
     return conversation;
   }
@@ -197,9 +161,12 @@ class AVIMConversation {
   static AVIMConversation _fromCache(String conversationId) =>
       _cache[conversationId];
 
-  static AVIMConversation _fromMap(MethodChannel channel, Map map) {
+  static String _parseConversationId(Map map) => map['conversationId'];
+
+  static AVIMConversation _fromMap(
+      MethodChannel channel, Map map, String clientId) {
     var conversation =
-        AVIMConversation._internal(channel, map['conversationId']);
+        AVIMConversation._internal(channel, map['conversationId'], clientId);
     conversation.members = Set.of<String>(map['members']);
     conversation.lastMessage = AVIMMessage._fromMap(map['lastMessage']);
     conversation.lastMessageAt = map['lastMessageAt'];
@@ -215,7 +182,10 @@ class AVIMConversation {
     int timestamp,
     int limit = 50,
   }) async {
+    assert(limit != null);
     List<Map> maps = await _invoke('queryMessages', {
+      'clientId': clientId,
+      'conversationId': conversationId,
       'msgId': msgId,
       'timestamp': timestamp,
       'limit': limit,
@@ -224,7 +194,12 @@ class AVIMConversation {
   }
 
   Future<AVIMMessage> sendMessage(AVIMMessage message) async {
-    Map map = await _invoke('sendMessage', message._toMap());
+    message.conversationId = conversationId;
+    Map map = await _invoke('sendMessage', {
+      'clientId': clientId,
+      'conversationId': conversationId,
+      'content': message.content,
+    });
     return AVIMMessage._fromMap(map, message);
   }
 }
@@ -273,7 +248,6 @@ class AVIMMessage {
   String messageId;
   int timestamp;
   int deliveredAt;
-  int readAt;
   int updateAt;
   AVIMMessageStatus status;
 
@@ -287,7 +261,6 @@ class AVIMMessage {
     msg.messageId = map['messageId'];
     msg.timestamp = map['timestamp'];
     msg.deliveredAt = map['deliveredAt'];
-    msg.readAt = map['readAt'];
     msg.updateAt = map['updateAt'];
     msg.status = AVIMMessageStatus(map['status']);
     return msg;
@@ -300,7 +273,6 @@ class AVIMMessage {
         'messageId': messageId,
         'timestamp': timestamp,
         'deliveredAt': deliveredAt,
-        'readAt': readAt,
         'updateAt': updateAt,
         'status': status.statusCode,
       };
