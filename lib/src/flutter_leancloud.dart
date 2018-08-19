@@ -7,7 +7,7 @@ import './im.dart';
 
 class FlutterLeanCloud {
   static final Logger _logger = Logger('FlutterLeanCloud');
-  static FlutterLeanCloud _instance;
+  static final FlutterLeanCloud _instance = new FlutterLeanCloud._internal();
 
   final MethodChannel _channel;
 
@@ -21,17 +21,19 @@ class FlutterLeanCloud {
   }
 
   factory FlutterLeanCloud() {
-    if (_instance == null) _instance = FlutterLeanCloud._internal();
     return _instance;
   }
 
-  static FlutterLeanCloud get() => new FlutterLeanCloud();
+  static FlutterLeanCloud get() => _instance;
 
   Future<AVIMClient> avIMClientGetInstance(String clientId) =>
       AVIMClient.getInstance(_channel, clientId);
 
   Future<void> avIMClientRegisterMessageHandler() =>
       AVIMClient.registerMessageHandler(_channel);
+
+  Future<void> avIMClientUnregisterMessageHandler() =>
+      AVIMClient.unregisterMessageHandler(_channel);
 
   Future<dynamic> _methodCall(MethodCall methodCall) async {
     var method = methodCall.method;

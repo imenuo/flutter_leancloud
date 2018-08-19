@@ -48,6 +48,13 @@ class AVIMClient {
     client._handleMessageHandlerOnMessage(arguments);
   }
 
+  void close() {
+    clientEventHandler = null;
+    conversationEventHandler = null;
+    messageHandler = null;
+    _cache.remove(clientId);
+  }
+
   Future<dynamic> _invoke(String method, [dynamic arguments]) =>
       _channel.invokeMethod('avIMClient_$method', arguments);
 
@@ -130,6 +137,7 @@ abstract class AVIMConversationEventHandler {
 abstract class AVIMClientEventHandler {
   // void onClientOffline(AVIMClient client, int code);
   FutureOr<void> onConnectionPaused(AVIMClient client);
+
   FutureOr<void> onConnectionResumed(AVIMClient client);
 }
 
@@ -195,12 +203,23 @@ class AVIMConversation {
 
   Future<AVIMMessage> sendMessage(AVIMMessage message) async {
     message.conversationId = conversationId;
-    Map map = await _invoke('sendMessage', {
-      'clientId': clientId,
-      'conversationId': conversationId,
-      'content': message.content,
-    });
-    return AVIMMessage._fromMap(map, message);
+
+    try {
+      Map map = await _invoke('sendMessage', {
+        'clientId': clientId,
+        'conversationId': conversationId,
+        'content': message.content,
+      });
+      return AVIMMessage._fromMap(map, message);
+    } on PlatformException catch (e) {
+      AVIMMessage._fromMap(e.details, message);
+      rethrow;
+    }
+  }
+
+  @override
+  String toString() {
+    return 'AVIMConversation{_channel: $_channel, conversationId: $conversationId, clientId: $clientId, members: $members, lastMessage: $lastMessage, lastMessageAt: $lastMessageAt, unreadMessagesCount: $unreadMessagesCount}';
   }
 }
 
@@ -276,4 +295,9 @@ class AVIMMessage {
         'updateAt': updateAt,
         'status': status.statusCode,
       };
+
+  @override
+  String toString() {
+    return 'AVIMMessage{content: $content, conversationId: $conversationId, from: $from, messageId: $messageId, timestamp: $timestamp, deliveredAt: $deliveredAt, updateAt: $updateAt, status: $status}';
+  }
 }

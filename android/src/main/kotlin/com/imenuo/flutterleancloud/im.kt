@@ -1,6 +1,5 @@
 package com.imenuo.flutterleancloud
 
-import android.util.Log
 import com.avos.avoscloud.im.v2.*
 import com.avos.avoscloud.im.v2.callback.AVIMConversationCallback
 import com.avos.avoscloud.im.v2.callback.AVIMConversationQueryCallback
@@ -8,6 +7,7 @@ import com.avos.avoscloud.im.v2.callback.AVIMMessagesQueryCallback
 import io.flutter.plugin.common.MethodCall
 import io.flutter.plugin.common.MethodChannel
 import org.json.JSONArray
+import timber.log.Timber
 
 
 internal fun AVIMConversation.toFlutterMap(): Map<String, Any?> {
@@ -55,7 +55,7 @@ internal class ConversationEventHandler(private val plugin: FlutterLeanCloudPlug
     override fun onMemberJoined(p0: AVIMClient?, p1: AVIMConversation?, p2: MutableList<String>?, p3: String?) {}
 
     override fun onKicked(p0: AVIMClient?, p1: AVIMConversation?, p2: String?) {
-        Log.d("ConvEventHandler", "onKicked(${p0?.clientId}, ${p1?.conversationId}, $p2)")
+        Timber.d("onKicked(${p0?.clientId}, ${p1?.conversationId}, $p2)")
     }
 
     override fun onMemberLeft(p0: AVIMClient?, p1: AVIMConversation?, p2: MutableList<String>?, p3: String?) {}
@@ -73,7 +73,16 @@ internal class ConversationEventHandler(private val plugin: FlutterLeanCloudPlug
 }
 
 private class MessageHandler(private val plugin: FlutterLeanCloudPlugin) : AVIMMessageHandler() {
+    override fun onMessage(message: AVIMMessage, conversation: AVIMConversation, client: AVIMClient) {
+        super.onMessage(message, conversation, client)
 
+        val data = HashMap<String, Any?>()
+        data["clientId"] = client.clientId
+        data["message"] = message.toFlutterMap()
+        data["conversation"] = conversation.toFlutterMap()
+
+        this.plugin.channel.invokeMethod("avIMClient_messageHandler_onMessage", data)
+    }
 }
 
 internal class AVIMClientMethodCallHandler(private val plugin: FlutterLeanCloudPlugin) : SubMethodCallHandler {
