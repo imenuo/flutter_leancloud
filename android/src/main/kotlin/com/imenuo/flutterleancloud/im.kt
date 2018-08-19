@@ -6,14 +6,13 @@ import com.avos.avoscloud.im.v2.callback.AVIMConversationQueryCallback
 import com.avos.avoscloud.im.v2.callback.AVIMMessagesQueryCallback
 import io.flutter.plugin.common.MethodCall
 import io.flutter.plugin.common.MethodChannel
-import org.json.JSONArray
 import timber.log.Timber
 
 
 internal fun AVIMConversation.toFlutterMap(): Map<String, Any?> {
     val obj = HashMap<String, Any?>()
     obj["conversationId"] = this.conversationId
-    obj["members"] = JSONArray(this.members)
+    obj["members"] = this.members
     obj["lastMessage"] = this.lastMessage?.toFlutterMap()
     obj["lastMessageAt"] = this.lastMessageAt?.time
     obj["unreadMessagesCount"] = this.unreadMessagesCount
@@ -118,6 +117,7 @@ internal class AVIMClientMethodCallHandler(private val plugin: FlutterLeanCloudP
         query.findInBackground(object : AVIMConversationQueryCallback() {
             override fun done(conversations: MutableList<AVIMConversation>?, exception: AVIMException?) {
                 if (exception != null) {
+                    Timber.e(exception, "cannot query conversations")
                     result.error("ERROR", "cannot query conversations", exception.toString())
                     return
                 }
@@ -132,7 +132,7 @@ internal class AVIMClientMethodCallHandler(private val plugin: FlutterLeanCloudP
 
     private fun registerMessageHandler(result: MethodChannel.Result) {
         if (messageHandler != null) {
-            result.error("ILLEGAL_STATE", "message handler has been set already", null)
+            result.success(null)
             return
         }
         messageHandler = MessageHandler(this.plugin)
@@ -142,7 +142,7 @@ internal class AVIMClientMethodCallHandler(private val plugin: FlutterLeanCloudP
 
     private fun unregisterMessageHandler(result: MethodChannel.Result) {
         if (messageHandler == null) {
-            result.error("ILLEGAL_STATE", "message handler has not been set", null)
+            result.success(null)
             return
         }
         AVIMMessageManager.unregisterMessageHandler(AVIMMessage::class.java, messageHandler)
@@ -167,7 +167,7 @@ internal class AVIMConversationMethodCallHandler(private val plugin: FlutterLean
 
         val method = call.method.removePrefix("avIMConversation_")
         when (method) {
-            "queryMessage" -> queryMessage(call, result)
+            "queryMessages" -> queryMessages(call, result)
             "sendMessage" -> sendMessage(call, result)
             else -> throw NotImplementedError("unimplemented handler for ${call.method}")
         }
@@ -194,7 +194,7 @@ internal class AVIMConversationMethodCallHandler(private val plugin: FlutterLean
         })
     }
 
-    private fun queryMessage(call: MethodCall, result: MethodChannel.Result) {
+    private fun queryMessages(call: MethodCall, result: MethodChannel.Result) {
         val clientId: String = call.argument("clientId")
         val conversationId: String = call.argument("conversationId")
         val msgId: String? = call.argument("msgId")

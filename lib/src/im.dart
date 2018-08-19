@@ -63,13 +63,14 @@ class AVIMClient {
     bool isCompact = true,
     bool refreshLastMessage = true,
   }) async {
-    List<Map> maps = await _invoke('queryConversations', {
+    List maps = await _invoke('queryConversations', {
       'clientId': clientId,
       'ids': conversationIds.toList(growable: false),
       'isCompact': isCompact,
       'refreshLastMessage': refreshLastMessage,
     });
     return maps
+        .cast<Map>()
         .map((map) => AVIMConversation._fromMap(_channel, map, clientId))
         .toList();
   }
@@ -175,8 +176,11 @@ class AVIMConversation {
       MethodChannel channel, Map map, String clientId) {
     var conversation =
         AVIMConversation._internal(channel, map['conversationId'], clientId);
-    conversation.members = Set.of<String>(map['members']);
-    conversation.lastMessage = AVIMMessage._fromMap(map['lastMessage']);
+    conversation.members =
+        Set.of<String>((map['members'] as List).cast<String>());
+    conversation.lastMessage = map['lastMessage'] == null
+        ? null
+        : AVIMMessage._fromMap(map['lastMessage']);
     conversation.lastMessageAt = map['lastMessageAt'];
     conversation.unreadMessagesCount = map['unreadMessagesCount'];
     return conversation;
@@ -191,14 +195,14 @@ class AVIMConversation {
     int limit = 50,
   }) async {
     assert(limit != null);
-    List<Map> maps = await _invoke('queryMessages', {
+    List maps = await _invoke('queryMessages', {
       'clientId': clientId,
       'conversationId': conversationId,
       'msgId': msgId,
       'timestamp': timestamp,
       'limit': limit,
     });
-    return maps.map(AVIMMessage._fromMap).toList();
+    return maps.cast<Map>().map(AVIMMessage._fromMap).toList();
   }
 
   Future<AVIMMessage> sendMessage(AVIMMessage message) async {
