@@ -221,6 +221,13 @@ class AVIMConversation {
     }
   }
 
+  Future<void> read() async {
+    await _invoke('read', {
+      'clientId': clientId,
+      'conversationId': conversationId,
+    });
+  }
+
   @override
   String toString() {
     return 'AVIMConversation{_channel: $_channel, conversationId: $conversationId, clientId: $clientId, members: $members, lastMessage: $lastMessage, lastMessageAt: $lastMessageAt, unreadMessagesCount: $unreadMessagesCount}';

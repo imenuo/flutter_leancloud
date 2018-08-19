@@ -169,6 +169,7 @@ internal class AVIMConversationMethodCallHandler(private val plugin: FlutterLean
         when (method) {
             "queryMessages" -> queryMessages(call, result)
             "sendMessage" -> sendMessage(call, result)
+            "read" -> read(call, result)
             else -> throw NotImplementedError("unimplemented handler for ${call.method}")
         }
 
@@ -207,6 +208,15 @@ internal class AVIMConversationMethodCallHandler(private val plugin: FlutterLean
         } else {
             conversation.queryMessages(msgId, timestamp, limit, MessagesQueryCallback(result))
         }
+    }
+
+    private fun read(call: MethodCall, result: MethodChannel.Result) {
+        val clientId: String = call.argument("clientId")
+        val conversationId: String = call.argument("conversationId")
+
+        val conversation = internalGetConversation(clientId, conversationId)
+        conversation.read()
+        result.success(null)
     }
 
     class MessagesQueryCallback(private val result: MethodChannel.Result) : AVIMMessagesQueryCallback() {
