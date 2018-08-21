@@ -29,6 +29,7 @@ class AVIMClient {
   /// invoke `FlutterLeanCloud.avIMClientGetInstance()` instead.
   static Future<AVIMClient> getInstance(
       MethodChannel channel, String clientId) async {
+    if (_cache.containsKey(clientId)) return _cache[clientId];
     await channel.invokeMethod('avIMClient_getInstance', clientId);
     return AVIMClient._internal(channel, clientId);
   }

@@ -42,7 +42,7 @@ class FlutterLeanCloud {
       await AVIMClient.handleMessageHandlerOnMessage(args);
       return null;
     } else if (method.startsWith('avIMClient_')) {
-      String clientId = methodCall.arguments['_clientId'];
+      String clientId = methodCall.arguments['clientId'];
       AVIMClient client = await avIMClientGetInstance(clientId);
       return await client.onClientMethodCall(methodCall);
     }
