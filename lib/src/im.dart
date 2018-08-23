@@ -102,6 +102,8 @@ class AVIMClient {
       case 'avIMClient_conversationEventHandler_onUnreadMessagesCountUpdated':
         return _handleConversationEventHandlerOnUnreadMessagesCountUpdated(
             args);
+      case 'avIMClient_conversationEventHandler_onKicked':
+        return _handleConversationEventHandlerOnKicked(args);
       default:
         _logger.shout('unhandled method call: $methodCall');
     }
@@ -128,6 +130,13 @@ class AVIMClient {
     await conversationEventHandler?.onUnreadMessagesCountUpdated(this,
         AVIMConversation._fromMap(_channel, args['conversation'], clientId));
   }
+
+  Future<void> _handleConversationEventHandlerOnKicked(args) async {
+    await conversationEventHandler?.onKicked(
+        this,
+        AVIMConversation._fromMap(_channel, args['conversation'], clientId),
+        args['kickedBy']);
+  }
 }
 
 abstract class AVIMMessageHandler {
@@ -138,6 +147,9 @@ abstract class AVIMMessageHandler {
 abstract class AVIMConversationEventHandler {
   FutureOr<void> onUnreadMessagesCountUpdated(
       AVIMClient client, AVIMConversation conversation);
+
+  FutureOr<void> onKicked(
+      AVIMClient client, AVIMConversation conversation, String kickedBy);
 }
 
 abstract class AVIMClientEventHandler {

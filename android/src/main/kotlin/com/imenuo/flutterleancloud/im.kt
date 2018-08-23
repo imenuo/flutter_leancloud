@@ -53,8 +53,15 @@ internal class ConversationEventHandler(private val plugin: FlutterLeanCloudPlug
 
     override fun onMemberJoined(p0: AVIMClient?, p1: AVIMConversation?, p2: MutableList<String>?, p3: String?) {}
 
-    override fun onKicked(p0: AVIMClient?, p1: AVIMConversation?, p2: String?) {
-        Timber.d("onKicked(${p0?.clientId}, ${p1?.conversationId}, $p2)")
+    override fun onKicked(client: AVIMClient, conversation: AVIMConversation, kickedBy: String?) {
+        Timber.d("onKicked(${client.clientId}, ${conversation.conversationId}, $kickedBy)")
+
+        val data = HashMap<String, Any?>()
+        data["clientId"] = client.clientId
+        data["conversation"] = conversation.toFlutterMap()
+        data["kickedBy"] = kickedBy
+
+        this.plugin.channel.invokeMethod("avIMClient_conversationEventHandler_onKicked", data)
     }
 
     override fun onMemberLeft(p0: AVIMClient?, p1: AVIMConversation?, p2: MutableList<String>?, p3: String?) {}
