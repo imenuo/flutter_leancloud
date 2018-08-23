@@ -159,6 +159,25 @@ abstract class AVIMClientEventHandler {
   FutureOr<void> onConnectionResumed(AVIMClient client);
 }
 
+class AVIMException {
+  final int code;
+  final int appCode;
+  final String message;
+
+  AVIMException._internal({this.code, this.appCode, this.message});
+
+  @override
+  String toString() {
+    return 'AVIMException{code: $code, appCode: $appCode, message: $message}';
+  }
+
+  static AVIMException _fromMap(Map map) => new AVIMException._internal(
+        code: map['code'],
+        appCode: map['appCode'],
+        message: map['message'],
+      );
+}
+
 class AVIMConversation {
   static final _cache = <String, AVIMConversation>{};
 
@@ -242,8 +261,9 @@ class AVIMConversation {
       });
       return AVIMMessage._fromMap(map, message);
     } on PlatformException catch (e) {
-      AVIMMessage._fromMap(e.details, message);
-      rethrow;
+      final details = e.details as Map;
+      AVIMMessage._fromMap(details['message'], message);
+      throw AVIMException._fromMap(details['exception']);
     }
   }
 

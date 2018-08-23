@@ -32,6 +32,14 @@ internal fun AVIMMessage.toFlutterMap(): Map<String, Any?> {
     return obj
 }
 
+internal fun AVIMException.toFlutterMap(): Map<String, Any?> {
+    val obj = HashMap<String, Any?>()
+    obj["code"] = code
+    obj["appCode"] = appCode
+    obj["message"] = message
+    return obj
+}
+
 internal class ClientEventHandler(private val plugin: FlutterLeanCloudPlugin) : AVIMClientEventHandler() {
     override fun onConnectionResume(client: AVIMClient) {
         val data = HashMap<String, Any?>()
@@ -194,7 +202,10 @@ internal class AVIMConversationMethodCallHandler(private val plugin: FlutterLean
         conversation.sendMessage(message, object : AVIMConversationCallback() {
             override fun done(exception: AVIMException?) {
                 if (exception != null) {
-                    result.error("ERROR", "send message failed", message.toFlutterMap())
+                    val data = HashMap<String, Any?>()
+                    data["message"] = message.toFlutterMap()
+                    data["exception"] = exception.toFlutterMap()
+                    result.error("ERROR", "send message failed", data)
                     return
                 }
                 result.success(message.toFlutterMap())
