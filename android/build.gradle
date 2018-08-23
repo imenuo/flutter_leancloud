@@ -51,6 +51,8 @@ dependencies {
     implementation 'com.jakewharton.timber:timber:4.7.1'
 
     compileOnly 'com.android.support:support-v4:27.1.1'
-    compileOnly 'cn.leancloud.android:avoscloud-sdk:v4.6.4'
-    compileOnly 'cn.leancloud.android:avoscloud-push:v4.6.4@aar'
+    compileOnly 'cn.leancloud.android:avoscloud-sdk:v4.7.1'
+    compileOnly('cn.leancloud.android:avoscloud-push:v4.7.1@aar') {
+        transitive = true
+    }
 }
