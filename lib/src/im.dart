@@ -53,11 +53,15 @@ class AVIMClient {
     clientEventHandler = null;
     conversationEventHandler = null;
     messageHandler = null;
+    AVIMConversation._evictCache();
     _cache.remove(clientId);
   }
 
-  Future<dynamic> _invoke(String method, [dynamic arguments]) =>
-      _channel.invokeMethod('avIMClient_$method', arguments);
+  Future<dynamic> _invoke(String method, [dynamic arguments]) {
+    final nativeMethod = 'avIMClient_$method';
+    _logger.finest('_invoke($nativeMethod, $arguments)');
+    return _channel.invokeMethod(nativeMethod, arguments);
+  }
 
   Future<List<AVIMConversation>> queryConversations(
     Iterable<String> conversationIds, {
@@ -146,6 +150,7 @@ abstract class AVIMClientEventHandler {
 class AVIMConversation {
   static final _cache = <String, AVIMConversation>{};
 
+  final Logger _logger;
   final MethodChannel _channel;
   final String conversationId;
   final String clientId;
@@ -155,7 +160,8 @@ class AVIMConversation {
   int lastMessageAt;
   int unreadMessagesCount;
 
-  AVIMConversation._init(this._channel, this.conversationId, this.clientId);
+  AVIMConversation._init(this._channel, this.conversationId, this.clientId)
+      : _logger = new Logger('AVIMConversation($conversationId)');
 
   factory AVIMConversation._internal(
       MethodChannel channel, String conversationId, String clientId) {
@@ -170,6 +176,10 @@ class AVIMConversation {
 
   static AVIMConversation _fromCache(String conversationId) =>
       _cache[conversationId];
+
+  static void _evictCache() {
+    _cache.clear();
+  }
 
   static String _parseConversationId(Map map) => map['conversationId'];
 
@@ -187,8 +197,11 @@ class AVIMConversation {
     return conversation;
   }
 
-  Future<dynamic> _invoke(String method, [dynamic arguments]) =>
-      _channel.invokeMethod('avIMConversation_$method', arguments);
+  Future<dynamic> _invoke(String method, [dynamic arguments]) {
+    final nativeMethod = 'avIMConversation_$method';
+    _logger.finest('_invoke($nativeMethod, $arguments)');
+    return _channel.invokeMethod(nativeMethod, arguments);
+  }
 
   Future<List<AVIMMessage>> queryMessages({
     String msgId,
