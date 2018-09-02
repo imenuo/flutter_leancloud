@@ -1,14 +1,30 @@
 import Flutter
 import UIKit
-    
-public class SwiftFlutterLeanCloudPlugin: NSObject, FlutterPlugin {
-  public static func register(with registrar: FlutterPluginRegistrar) {
-    let channel = FlutterMethodChannel(name: "flutter_leancloud", binaryMessenger: registrar.messenger())
-    let instance = SwiftFlutterLeanCloudPlugin()
-    registrar.addMethodCallDelegate(instance, channel: channel)
-  }
 
-  public func handle(_ call: FlutterMethodCall, result: @escaping FlutterResult) {
-    result("iOS " + UIDevice.current.systemVersion)
-  }
+protocol SubMethodCallHandler {
+    func onMethodCall(_ call: FlutterMethodCall, result: @escaping FlutterResult) -> Bool
+}
+
+public class SwiftFlutterLeanCloudPlugin: NSObject, FlutterPlugin {
+    public static func register(with registrar: FlutterPluginRegistrar) {
+        let channel = FlutterMethodChannel(name: "flutter_leancloud", binaryMessenger: registrar.messenger())
+        let instance = SwiftFlutterLeanCloudPlugin(with: channel)
+        registrar.addMethodCallDelegate(instance, channel: channel)
+    }
+
+    public let channel: FlutterMethodChannel
+    private let handlers: [SubMethodCallHandler] = []
+
+    init(with channel: FlutterMethodChannel) {
+        self.channel = channel
+    }
+
+    public func handle(_ call: FlutterMethodCall, result: @escaping FlutterResult) {
+        for handler in handlers {
+            if handler.onMethodCall(call, result: result) {
+                return
+            }
+        }
+        result(FlutterMethodNotImplemented)
+    }
 }
