@@ -54,31 +54,62 @@ extension AVIMMessage {
 }
 
 class ClientDelegate: NSObject, AVIMClientDelegate {
-    private let plugin: FlutterLeanCloudPlugin
+    private let plugin: SwiftFlutterLeanCloudPlugin
 
-    init(with plugin: FlutterLeanCloudPlugin) {
+    init(with plugin: SwiftFlutterLeanCloudPlugin) {
         self.plugin = plugin
     }
 
     func imClientPaused(_ imClient: AVIMClient) {
+        let data: [String: Any?] = [
+            "clientId": imClient.clientId
+        ]
 
+        self.plugin.channel.invokeMethod("avIMClient_clientEventHandler_onConnectionPaused", arguments: data)
     }
 
     func imClientResuming(_ imClient: AVIMClient) {
     }
 
     func imClientResumed(_ imClient: AVIMClient) {
+        let data: [String: Any?] = [
+            "clientId": imClient.clientId,
+        ]
+
+        self.plugin.channel.invokeMethod("avIMClient_clientEventHandler_onConnectionResumed", arguments: data)
     }
 
     func imClientClosed(_ imClient: AVIMClient, error: Error?) {
     }
+
+    func conversation(_ conversation: AVIMConversation, didReceiveCommonMessage message: AVIMMessage) {
+        let data: [String: Any?] = [
+            "clientId": conversation.clientId,
+            "message": message.toFlutterDictionary(),
+            "conversation": conversation.toFlutterDictionary(),
+        ]
+
+        self.plugin.channel.invokeMethod("avIMClient_messageHandler_onMessage", arguments: data)
+    }
+
+    func conversation(_ conversation: AVIMConversation, didUpdateForKey key: AVIMConversationUpdatedKey) {
+        if key == AVIMConversationUpdatedKey.unreadMessagesCount {
+            let data: [String: Any?] = [
+                "clientId": conversation.clientId,
+                "conversation": conversation.toFlutterDictionary(),
+            ]
+
+            self.plugin.channel.invokeMethod("avIMClient_conversationEventHandler_onUnreadMessagesCountUpdated",
+                    arguments: data)
+        }
+    }
 }
 
 class AVIMClientMethodCallHandler: SubMethodCallHandler {
-    private let plugin: FlutterLeanCloudPlugin
+    private let plugin: SwiftFlutterLeanCloudPlugin
     private let clientDelegate: AVIMClientDelegate
 
-    init(with plugin: FlutterLeanCloudPlugin) {
+    init(with plugin: SwiftFlutterLeanCloudPlugin) {
         self.plugin = plugin
         self.clientDelegate = ClientDelegate(with: plugin)
     }
@@ -173,12 +204,12 @@ class AVIMConversationMethodCallHandler: SubMethodCallHandler {
         return true
     }
 
-    private func read(_ call: FlutterMethodCall, _ result: (Any?) -> Void) {
+    private func read(_ call: FlutterMethodCall, _ result: @escaping (Any?) -> Void) {
         let args = call.arguments as! [String: Any?]
         let clientId = args["clientId"] as! String
         let conversationId = args["conversationId"] as! String
 
-        internalGetConversation(in: clientId, forId: conversationId, callback: {(conversation, error) in
+        internalGetConversation(in: clientId, forId: conversationId, callback: { (conversation, error) in
             if let error = error {
                 return result(FlutterError(code: "ERROR", message: "cannot get conversation", details: error.localizedDescription))
             }

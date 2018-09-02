@@ -13,10 +13,15 @@ public class SwiftFlutterLeanCloudPlugin: NSObject, FlutterPlugin {
     }
 
     public let channel: FlutterMethodChannel
-    private let handlers: [SubMethodCallHandler] = []
+    private var handlers: [SubMethodCallHandler] = []
 
     init(with channel: FlutterMethodChannel) {
         self.channel = channel
+        
+        super.init()
+        
+        self.handlers.append(AVIMClientMethodCallHandler(with: self))
+        self.handlers.append(AVIMConversationMethodCallHandler())
     }
 
     public func handle(_ call: FlutterMethodCall, result: @escaping FlutterResult) {
