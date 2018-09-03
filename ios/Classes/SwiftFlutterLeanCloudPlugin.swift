@@ -1,5 +1,6 @@
 import Flutter
 import UIKit
+import AVOSCloudIM
 
 protocol SubMethodCallHandler {
     func onMethodCall(_ call: FlutterMethodCall, result: @escaping FlutterResult) -> Bool
@@ -15,6 +16,10 @@ public class SwiftFlutterLeanCloudPlugin: NSObject, FlutterPlugin {
     public let channel: FlutterMethodChannel
     private var handlers: [SubMethodCallHandler] = []
 
+    public static func getAVIMClient(clientId: String) -> AVIMClient {
+        return AVIMClientMethodCallHandler.getClient(clientId: clientId)
+    }
+  
     init(with channel: FlutterMethodChannel) {
         self.channel = channel
         

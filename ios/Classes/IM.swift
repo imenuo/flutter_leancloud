@@ -43,7 +43,7 @@ extension AVIMMessage {
         return [
             "content": self.content,
             "conversationId": self.conversationId,
-            "from": nil, // TODO add this to document
+            "from": self.clientId, // TODO add this to document
             "messageId": self.messageId,
             "timestamp": self.sendTimestamp,
             "deliveredAt": self.deliveredTimestamp,
@@ -106,9 +106,20 @@ class ClientDelegate: NSObject, AVIMClientDelegate {
 }
 
 class AVIMClientMethodCallHandler: SubMethodCallHandler {
+    private static var clientCache: [String: AVIMClient] = [:]
+    
     private let plugin: SwiftFlutterLeanCloudPlugin
     private let clientDelegate: AVIMClientDelegate
-
+  
+    static func getClient(clientId: String) -> AVIMClient {
+        var client = clientCache[clientId]
+        if client == nil {
+            client = AVIMClient.init(clientId: clientId)
+            clientCache[clientId] = client
+        }
+        return client!
+    }
+    
     init(with plugin: SwiftFlutterLeanCloudPlugin) {
         self.plugin = plugin
         self.clientDelegate = ClientDelegate(with: plugin)
@@ -141,7 +152,7 @@ class AVIMClientMethodCallHandler: SubMethodCallHandler {
             return result(FlutterError(code: "INVALID_ARGS", message: "clientId cannot be nil", details: nil))
         }
         let clientId = call.arguments as! String
-        let client = AVIMClient(clientId: clientId)
+        let client = AVIMClientMethodCallHandler.getClient(clientId: clientId)
         client.delegate = self.clientDelegate
         result(nil)
     }
@@ -149,7 +160,7 @@ class AVIMClientMethodCallHandler: SubMethodCallHandler {
     private func queryConversations(_ call: FlutterMethodCall, _ result: @escaping (Any?) -> Void) {
         let args = call.arguments as! [String: Any?]
         let clientId = args["clientId"] as! String
-        let client = AVIMClient(clientId: clientId)
+        let client = AVIMClientMethodCallHandler.getClient(clientId: clientId)
         let ids = args["ids"] as! [String]
         let refreshLastMessage = args["refreshLastMessage"] as! Bool
 
@@ -175,13 +186,17 @@ class AVIMClientMethodCallHandler: SubMethodCallHandler {
 class AVIMConversationMethodCallHandler: SubMethodCallHandler {
     private func internalGetConversation(in clientId: String, forId conversationId: String,
                                          callback: @escaping (AVIMConversation?, Error?) -> Void) -> Void {
-        let client = AVIMClient(clientId: clientId)
+        let client = AVIMClientMethodCallHandler.getClient(clientId: clientId)
         let conversation = client.conversation(forId: conversationId)
         if let conversation = conversation {
+            debugPrint("got AVIMConversation from cache")
             return callback(conversation, nil)
         }
         let query = client.conversationQuery()
-        query.getConversationById(conversationId, callback: callback)
+        query.getConversationById(conversationId, callback: { (conversation, error) in
+            debugPrint("got AVIMConversation from network")
+            callback(conversation, error)
+        })
     }
 
     func onMethodCall(_ call: FlutterMethodCall, result: @escaping FlutterResult) -> Bool {
@@ -189,7 +204,7 @@ class AVIMConversationMethodCallHandler: SubMethodCallHandler {
             return false
         }
 
-        let method = call.method["avIMConversation".endIndex...]
+        let method = call.method["avIMConversation_".endIndex...]
         switch method {
         case "queryMessages":
             queryMessages(call, result)
