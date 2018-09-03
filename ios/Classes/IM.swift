@@ -122,9 +122,9 @@ class AVIMClientMethodCallHandler: SubMethodCallHandler {
         let method = call.method["avIMClient_".endIndex...]
         switch method {
         case "registerMessageHandler":
-            break
+            result(nil)
         case "unregisterMessageHandler":
-            break
+            result(nil)
         case "getInstance":
             getInstance(call, result)
         case "queryConversations":
