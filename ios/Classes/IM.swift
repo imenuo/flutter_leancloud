@@ -69,6 +69,7 @@ class ClientDelegate: NSObject, AVIMClientDelegate {
     }
 
     func imClientResuming(_ imClient: AVIMClient) {
+        imClientResumed(imClient)
     }
 
     func imClientResumed(_ imClient: AVIMClient) {
