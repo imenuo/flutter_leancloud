@@ -3,6 +3,7 @@
 //
 
 import Foundation
+import AVOSCloud
 import AVOSCloudIM
 
 extension AVIMConversation {
@@ -50,6 +51,27 @@ extension AVIMMessage {
             "updateAt": self.updatedAt?.millisecondsSince1970,
             "status": self.status.statusCode,
         ]
+    }
+}
+
+extension AVIMCachePolicy {
+    static func fromFlutterInt(_ value: Int?) -> AVIMCachePolicy? {
+        switch value {
+        case 0:
+            return AVIMCachePolicy.cacheElseNetwork
+        case 1:
+            return AVIMCachePolicy.cacheOnly
+        case 2:
+            return AVIMCachePolicy.cacheThenNetwork
+        case 3:
+            return AVIMCachePolicy.ignoreCache
+        case 4:
+            return AVIMCachePolicy.networkElseCache
+        case 5:
+            return AVIMCachePolicy.networkOnly
+        default:
+            return nil
+        }
     }
 }
 
@@ -164,11 +186,15 @@ class AVIMClientMethodCallHandler: SubMethodCallHandler {
         let client = AVIMClientMethodCallHandler.getClient(clientId: clientId)
         let ids = args["ids"] as! [String]
         let refreshLastMessage = args["refreshLastMessage"] as! Bool
+        let cachePolicy = AVIMCachePolicy.fromFlutterInt(args["cachePolicy"] as! Int?)
 
         let query = client.conversationQuery()
         query.whereKey("objectId", containedIn: ids)
         if refreshLastMessage {
             query.option = AVIMConversationQueryOption.withMessage
+        }
+        if cachePolicy != nil {
+            query.cachePolicy = cachePolicy
         }
         query.findConversations(callback: { (conversations, error) in
             if let error = error {

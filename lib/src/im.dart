@@ -67,12 +67,14 @@ class AVIMClient {
     Iterable<String> conversationIds, {
     bool isCompact = true,
     bool refreshLastMessage = true,
+    AVQueryCachePolicy cachePolicy,
   }) async {
     List maps = await _invoke('queryConversations', {
       'clientId': clientId,
       'ids': conversationIds.toList(growable: false),
       'isCompact': isCompact,
       'refreshLastMessage': refreshLastMessage,
+      'cachePolicy': cachePolicy?.cachePolicy,
     });
     return maps
         .cast<Map>()
@@ -84,11 +86,13 @@ class AVIMClient {
     String conversationId, {
     bool isCompact = true,
     bool refreshLastMessage = true,
+    AVQueryCachePolicy cachePolicy,
   }) =>
       queryConversations(
         [conversationId],
         isCompact: isCompact,
         refreshLastMessage: refreshLastMessage,
+        cachePolicy: cachePolicy,
       ).then((list) => list.isEmpty ? null : list.first);
 
   Future<dynamic> onClientMethodCall(MethodCall methodCall) {
@@ -157,6 +161,38 @@ abstract class AVIMClientEventHandler {
   FutureOr<void> onConnectionPaused(AVIMClient client);
 
   FutureOr<void> onConnectionResumed(AVIMClient client);
+}
+
+class AVQueryCachePolicy {
+  final int cachePolicy;
+
+  const AVQueryCachePolicy._internal(this.cachePolicy);
+
+  factory AVQueryCachePolicy(int cachePolicy) {
+    switch (cachePolicy) {
+      case 0:
+        return CACHE_ELSE_NETWORK;
+      case 1:
+        return CACHE_ONLY;
+      case 2:
+        return CACHE_THEN_NETWORK;
+      case 3:
+        return IGNORE_CACHE;
+      case 4:
+        return NETWORK_ELSE_CACHE;
+      case 5:
+        return NETWORK_ONLY;
+      default:
+        return null;
+    }
+  }
+
+  static const CACHE_ELSE_NETWORK = AVQueryCachePolicy._internal(0);
+  static const CACHE_ONLY = AVQueryCachePolicy._internal(1);
+  static const CACHE_THEN_NETWORK = AVQueryCachePolicy._internal(2);
+  static const IGNORE_CACHE = AVQueryCachePolicy._internal(3);
+  static const NETWORK_ELSE_CACHE = AVQueryCachePolicy._internal(4);
+  static const NETWORK_ONLY = AVQueryCachePolicy._internal(5);
 }
 
 class AVIMException {
