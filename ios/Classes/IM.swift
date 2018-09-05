@@ -193,7 +193,7 @@ class AVIMClientMethodCallHandler: SubMethodCallHandler {
         if refreshLastMessage {
             query.option = AVIMConversationQueryOption.withMessage
         }
-        if cachePolicy != nil {
+        if let cachePolicy = cachePolicy {
             query.cachePolicy = cachePolicy
         }
         query.findConversations(callback: { (conversations, error) in
