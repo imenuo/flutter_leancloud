@@ -1,5 +1,6 @@
 package com.imenuo.flutterleancloud
 
+import com.avos.avoscloud.AVQuery
 import com.avos.avoscloud.im.v2.*
 import com.avos.avoscloud.im.v2.callback.AVIMConversationCallback
 import com.avos.avoscloud.im.v2.callback.AVIMConversationQueryCallback
@@ -38,6 +39,18 @@ internal fun AVIMException.toFlutterMap(): Map<String, Any?> {
     obj["appCode"] = appCode
     obj["message"] = message
     return obj
+}
+
+internal fun parseCachePolicy(cachePolicy: Int?): AVQuery.CachePolicy? {
+    return when (cachePolicy) {
+        0 -> AVQuery.CachePolicy.CACHE_ELSE_NETWORK
+        1 -> AVQuery.CachePolicy.CACHE_ONLY
+        2 -> AVQuery.CachePolicy.CACHE_THEN_NETWORK
+        3 -> AVQuery.CachePolicy.IGNORE_CACHE
+        4 -> AVQuery.CachePolicy.NETWORK_ELSE_CACHE
+        5 -> AVQuery.CachePolicy.NETWORK_ONLY
+        else -> null
+    }
 }
 
 internal class ClientEventHandler(private val plugin: FlutterLeanCloudPlugin) : AVIMClientEventHandler() {
@@ -125,10 +138,12 @@ internal class AVIMClientMethodCallHandler(private val plugin: FlutterLeanCloudP
         // TODO 2018-08-19: isCompact not implemented in AVIMConversationsQuery, but documented in website
         // val isCompact: Boolean = call.argument("isCompact")
         val refreshLastMessage: Boolean = call.argument("refreshLastMessage")
+        val cachePolicy: AVQuery.CachePolicy? = parseCachePolicy(call.argument("cachePolicy"))
 
         val query = client.conversationsQuery
         query.whereContainsIn("objectId", ids)
         query.isWithLastMessagesRefreshed = refreshLastMessage
+        if (cachePolicy != null) query.setQueryPolicy(cachePolicy)
         query.findInBackground(object : AVIMConversationQueryCallback() {
             override fun done(conversations: MutableList<AVIMConversation>?, exception: AVIMException?) {
                 if (exception != null) {
