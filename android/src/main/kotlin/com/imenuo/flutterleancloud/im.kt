@@ -132,12 +132,12 @@ internal class AVIMClientMethodCallHandler(private val plugin: FlutterLeanCloudP
     }
 
     private fun queryConversations(call: MethodCall, result: MethodChannel.Result) {
-        val clientId: String = call.argument("clientId")
+        val clientId: String = call.argument("clientId")!!
         val client = AVIMClient.getInstance(clientId)
-        val ids: List<String> = call.argument("ids")
+        val ids: List<String> = call.argument("ids")!!
         // TODO 2018-08-19: isCompact not implemented in AVIMConversationsQuery, but documented in website
         // val isCompact: Boolean = call.argument("isCompact")
-        val refreshLastMessage: Boolean = call.argument("refreshLastMessage")
+        val refreshLastMessage: Boolean = call.argument("refreshLastMessage")!!
         val cachePolicy: AVQuery.CachePolicy? = parseCachePolicy(call.argument("cachePolicy"))
 
         val query = client.conversationsQuery
@@ -207,9 +207,9 @@ internal class AVIMConversationMethodCallHandler(private val plugin: FlutterLean
     }
 
     private fun sendMessage(call: MethodCall, result: MethodChannel.Result) {
-        val clientId: String = call.argument("clientId")
-        val conversationId: String = call.argument("conversationId")
-        val content: String = call.argument("content")
+        val clientId: String = call.argument("clientId")!!
+        val conversationId: String = call.argument("conversationId")!!
+        val content: String = call.argument("content")!!
 
         val conversation = internalGetConversation(clientId, conversationId)
         val message = AVIMMessage()
@@ -229,11 +229,11 @@ internal class AVIMConversationMethodCallHandler(private val plugin: FlutterLean
     }
 
     private fun queryMessages(call: MethodCall, result: MethodChannel.Result) {
-        val clientId: String = call.argument("clientId")
-        val conversationId: String = call.argument("conversationId")
+        val clientId: String = call.argument("clientId")!!
+        val conversationId: String = call.argument("conversationId")!!
         val msgId: String? = call.argument("msgId")
         val timestamp: Long? = call.argument("timestamp")
-        val limit: Int = call.argument("limit")
+        val limit: Int = call.argument("limit")!!
 
         val conversation = internalGetConversation(clientId, conversationId)
         if (msgId == null || timestamp == null) {
@@ -244,8 +244,8 @@ internal class AVIMConversationMethodCallHandler(private val plugin: FlutterLean
     }
 
     private fun read(call: MethodCall, result: MethodChannel.Result) {
-        val clientId: String = call.argument("clientId")
-        val conversationId: String = call.argument("conversationId")
+        val clientId: String = call.argument("clientId")!!
+        val conversationId: String = call.argument("conversationId")!!
 
         val conversation = internalGetConversation(clientId, conversationId)
         conversation.read()
