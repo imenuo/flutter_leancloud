@@ -187,8 +187,10 @@ class AVIMClientMethodCallHandler: SubMethodCallHandler {
         let ids = args["ids"] as! [String]
         let refreshLastMessage = args["refreshLastMessage"] as! Bool
         let cachePolicy = AVIMCachePolicy.fromFlutterInt(args["cachePolicy"] as! Int?)
+        let limit = args["limit"] as! Int
 
         let query = client.conversationQuery()
+        query.limit = limit
         query.whereKey("objectId", containedIn: ids)
         if refreshLastMessage {
             query.option = AVIMConversationQueryOption.withMessage

@@ -1,14 +1,14 @@
 PODS:
-  - AVOSCloud (11.4.0)
-  - AVOSCloudIM (11.4.0):
-    - AVOSCloud (= 11.4.0)
-    - AVOSCloudIM/_ARC (= 11.4.0)
-    - AVOSCloudIM/_NOARC (= 11.4.0)
-  - AVOSCloudIM/_ARC (11.4.0):
-    - AVOSCloud (= 11.4.0)
-    - AVOSCloudIM/_NOARC (= 11.4.0)
-  - AVOSCloudIM/_NOARC (11.4.0):
-    - AVOSCloud (= 11.4.0)
+  - AVOSCloud (11.4.5)
+  - AVOSCloudIM (11.4.5):
+    - AVOSCloud (= 11.4.5)
+    - AVOSCloudIM/_ARC (= 11.4.5)
+    - AVOSCloudIM/_NOARC (= 11.4.5)
+  - AVOSCloudIM/_ARC (11.4.5):
+    - AVOSCloud (= 11.4.5)
+    - AVOSCloudIM/_NOARC (= 11.4.5)
+  - AVOSCloudIM/_NOARC (11.4.5):
+    - AVOSCloud (= 11.4.5)
   - Flutter (1.0.0)
   - flutter_leancloud (0.0.1):
     - AVOSCloud
@@ -31,11 +31,11 @@ EXTERNAL SOURCES:
     :path: ".symlinks/plugins/flutter_leancloud/ios"
 
 SPEC CHECKSUMS:
-  AVOSCloud: 1968612949f44d5a79c8ccdd550ca2107bbfde02
-  AVOSCloudIM: f0a771a9438f39edaf6e67bf051194036b5f33ee
-  Flutter: 9d0fac939486c9aba2809b7982dfdbb47a7b0296
-  flutter_leancloud: f55da309c0d96d128e33f3b2210d9e760347b887
+  AVOSCloud: 1c21d946e5422597353519b31c780c04ec5f4f5e
+  AVOSCloudIM: 3ae1b46db83ec4d62a68cb7a50f6bdc68b5138ac
+  Flutter: 58dd7d1b27887414a370fcccb9e645c08ffd7a6a
+  flutter_leancloud: ed6ef520f5e2892b75e61ba11edad99f45814f5d
 
 PODFILE CHECKSUM: 7765ea4305eaab0b3dfd384c7de11902aa3195fd
 
-COCOAPODS: 1.6.0.beta.1
+COCOAPODS: 1.6.0.beta.2

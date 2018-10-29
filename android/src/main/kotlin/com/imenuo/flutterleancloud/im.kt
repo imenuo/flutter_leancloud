@@ -139,8 +139,10 @@ internal class AVIMClientMethodCallHandler(private val plugin: FlutterLeanCloudP
         // val isCompact: Boolean = call.argument("isCompact")
         val refreshLastMessage: Boolean = call.argument("refreshLastMessage")!!
         val cachePolicy: AVQuery.CachePolicy? = parseCachePolicy(call.argument("cachePolicy"))
+        val limit: Int = call.argument("limit")!!
 
         val query = client.conversationsQuery
+        query.limit(limit)
         query.whereContainsIn("objectId", ids)
         query.isWithLastMessagesRefreshed = refreshLastMessage
         if (cachePolicy != null) query.setQueryPolicy(cachePolicy)

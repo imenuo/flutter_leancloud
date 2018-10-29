@@ -68,6 +68,7 @@ class AVIMClient {
     bool isCompact = true,
     bool refreshLastMessage = true,
     AVQueryCachePolicy cachePolicy,
+    limit = 10,
   }) async {
     List maps = await _invoke('queryConversations', {
       'clientId': clientId,
@@ -75,6 +76,7 @@ class AVIMClient {
       'isCompact': isCompact,
       'refreshLastMessage': refreshLastMessage,
       'cachePolicy': cachePolicy?.cachePolicy,
+      'limit': limit,
     });
     return maps
         .cast<Map>()
