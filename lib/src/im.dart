@@ -256,8 +256,7 @@ class AVIMConversation {
       MethodChannel channel, Map map, String clientId) {
     var conversation =
         AVIMConversation._internal(channel, map['conversationId'], clientId);
-    conversation.members =
-        Set.of<String>((map['members'] as List).cast<String>());
+    conversation.members = Set.of((map['members'] as List).cast<String>());
     conversation.lastMessage = map['lastMessage'] == null
         ? null
         : AVIMMessage._fromMap(map['lastMessage']);
