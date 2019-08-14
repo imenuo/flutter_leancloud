@@ -97,10 +97,12 @@ class AVIMClient {
         cachePolicy: cachePolicy,
       ).then((list) => list.isEmpty ? null : list.first);
 
-  Future<dynamic> onClientMethodCall(MethodCall methodCall) {
-    final method = methodCall.method;
-    final args = methodCall.arguments;
+  Future<dynamic> onClientEvent(String event, data) {
+    final method = event;
+    final args = data;
     switch (method) {
+      case 'avIMClient_messageHandler_onMessage':
+        return _handleMessageHandlerOnMessage(args);
       case 'avIMClient_clientEventHandler_onConnectionPaused':
         return _handleClientEventHandlerOnConnectionPaused(args);
       case 'avIMClient_clientEventHandler_onConnectionResumed':
@@ -111,7 +113,7 @@ class AVIMClient {
       case 'avIMClient_conversationEventHandler_onKicked':
         return _handleConversationEventHandlerOnKicked(args);
       default:
-        _logger.shout('unhandled method call: $methodCall');
+        _logger.shout('unhandled method call: $method');
     }
   }
 
@@ -142,6 +144,13 @@ class AVIMClient {
         this,
         AVIMConversation._fromMap(_channel, args['conversation'], clientId),
         args['kickedBy']);
+  }
+
+  static Future<void> handleEvent(String event, data) async {
+    final String clientId = data['clientId'];
+    final client = AVIMClient._fromCache(clientId);
+    if (client == null) return;
+    await client.onClientEvent(event, data);
   }
 }
 

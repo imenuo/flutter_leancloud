@@ -83,11 +83,12 @@ class ClientDelegate: NSObject, AVIMClientDelegate {
     }
 
     func imClientPaused(_ imClient: AVIMClient) {
-        let data: [String: Any?] = [
-            "clientId": imClient.clientId
-        ]
-
-        self.plugin.channel.invokeMethod("avIMClient_clientEventHandler_onConnectionPaused", arguments: data)
+        self.plugin.sendEvent(ChannelEventSuccess(withEvent: [
+            "event": "avIMClient_clientEventHandler_onConnectionPaused",
+            "data": [
+                "clientId": imClient.clientId
+            ]
+        ]))
     }
 
     func imClientResuming(_ imClient: AVIMClient) {
@@ -95,36 +96,42 @@ class ClientDelegate: NSObject, AVIMClientDelegate {
     }
 
     func imClientResumed(_ imClient: AVIMClient) {
-        let data: [String: Any?] = [
-            "clientId": imClient.clientId,
-        ]
-
-        self.plugin.channel.invokeMethod("avIMClient_clientEventHandler_onConnectionResumed", arguments: data)
+        self.plugin.sendEvent(ChannelEventSuccess(withEvent: [
+            "event": "avIMClient_clientEventHandler_onConnectionResumed",
+            "data": [
+                "clientId": imClient.clientId
+            ]
+        ]))
     }
 
     func imClientClosed(_ imClient: AVIMClient, error: Error?) {
     }
 
     func conversation(_ conversation: AVIMConversation, didReceiveCommonMessage message: AVIMMessage) {
-        let data: [String: Any?] = [
-            "clientId": conversation.clientId,
-            "message": message.toFlutterDictionary(),
-            "conversation": conversation.toFlutterDictionary(),
-        ]
-
-        self.plugin.channel.invokeMethod("avIMClient_messageHandler_onMessage", arguments: data)
+        self.plugin.sendEvent(ChannelEventSuccess(withEvent: [
+            "event": "avIMClient_messageHandler_onMessage",
+            "data": [
+                "clientId": conversation.clientId as Any,
+                "message": message.toFlutterDictionary(),
+                "conversation": conversation.toFlutterDictionary(),
+            ]
+        ]))
     }
 
     func conversation(_ conversation: AVIMConversation, didUpdateForKey key: AVIMConversationUpdatedKey) {
         if key == AVIMConversationUpdatedKey.unreadMessagesCount {
-            let data: [String: Any?] = [
-                "clientId": conversation.clientId,
-                "conversation": conversation.toFlutterDictionary(),
-            ]
-
-            self.plugin.channel.invokeMethod("avIMClient_conversationEventHandler_onUnreadMessagesCountUpdated",
-                    arguments: data)
+            self.plugin.sendEvent(ChannelEventSuccess(withEvent: [
+                "event": "avIMClient_conversationEventHandler_onUnreadMessagesCountUpdated",
+                "data": [
+                    "clientId": conversation.clientId as Any,
+                    "conversation": conversation.toFlutterDictionary(),
+                ]
+            ]))
         }
+    }
+    
+    func conversation(_ conversation: AVIMConversation, messageHasBeenUpdated message: AVIMMessage) {
+        print(message)
     }
 }
 
@@ -279,13 +286,22 @@ class AVIMConversationMethodCallHandler: SubMethodCallHandler {
             if let conversation = conversation {
                 let message = AVIMMessage(content: content)
                 conversation.send(message, callback: { (succeeded, error) in
-                    if let error = error {
-                        let error = error as NSError
-                        let exception: [String: Any?] = [
-                            "code": error.code,
-                            "appCode": error.code,
-                            "message": error.userInfo[NSLocalizedFailureReasonErrorKey],
-                        ]
+                    if !succeeded {
+                        var exception: [String: Any?];
+                        if let error = error {
+                            let error = error as NSError
+                            exception = [
+                                "code": error.code,
+                                "appCode": error.code,
+                                "message": error.userInfo[NSLocalizedFailureReasonErrorKey],
+                            ]
+                        } else {
+                            exception = [
+                                "code": -10000,
+                                "appCode": -10000,
+                                "message": "unknown",
+                            ]
+                        }
                         let data: [String: Any?] = [
                             "message": message.toFlutterDictionary(),
                             "exception": exception,

@@ -55,15 +55,21 @@ internal fun parseCachePolicy(cachePolicy: Int?): AVQuery.CachePolicy? {
 
 internal class ClientEventHandler(private val plugin: FlutterLeanCloudPlugin) : AVIMClientEventHandler() {
     override fun onConnectionResume(client: AVIMClient) {
-        val data = HashMap<String, Any?>()
-        data["clientId"] = client.clientId
-        this.plugin.channel.invokeMethod("avIMClient_clientEventHandler_onConnectionResumed", data)
+        this.plugin.sendEvent(ChannelEvent.Success(hashMapOf(
+                "event" to "avIMClient_clientEventHandler_onConnectionResumed",
+                "data" to hashMapOf(
+                        "clientId" to client.clientId
+                )
+        )))
     }
 
     override fun onConnectionPaused(client: AVIMClient) {
-        val data = HashMap<String, Any?>()
-        data["clientId"] = client.clientId
-        this.plugin.channel.invokeMethod("avIMClient_clientEventHandler_onConnectionPaused", data)
+        this.plugin.sendEvent(ChannelEvent.Success(hashMapOf(
+                "event" to "avIMClient_clientEventHandler_onConnectionPaused",
+                "data" to hashMapOf(
+                        "clientId" to client.clientId
+                )
+        )))
     }
 
     override fun onClientOffline(client: AVIMClient, reason: Int) {}
@@ -77,12 +83,14 @@ internal class ConversationEventHandler(private val plugin: FlutterLeanCloudPlug
     override fun onKicked(client: AVIMClient, conversation: AVIMConversation, kickedBy: String?) {
         Timber.d("onKicked(${client.clientId}, ${conversation.conversationId}, $kickedBy)")
 
-        val data = HashMap<String, Any?>()
-        data["clientId"] = client.clientId
-        data["conversation"] = conversation.toFlutterMap()
-        data["kickedBy"] = kickedBy
-
-        this.plugin.channel.invokeMethod("avIMClient_conversationEventHandler_onKicked", data)
+        this.plugin.sendEvent(ChannelEvent.Success(hashMapOf(
+                "event" to "avIMClient_conversationEventHandler_onKicked",
+                "data" to hashMapOf(
+                        "clientId" to client.clientId,
+                        "conversation" to conversation.toFlutterMap(),
+                        "kickedBy" to kickedBy
+                )
+        )))
     }
 
     override fun onMemberLeft(p0: AVIMClient?, p1: AVIMConversation?, p2: MutableList<String>?, p3: String?) {}
@@ -90,12 +98,13 @@ internal class ConversationEventHandler(private val plugin: FlutterLeanCloudPlug
     override fun onUnreadMessagesCountUpdated(client: AVIMClient, conversation: AVIMConversation) {
         super.onUnreadMessagesCountUpdated(client, conversation)
 
-        val data = HashMap<String, Any?>()
-        data["clientId"] = client.clientId
-        data["conversation"] = conversation.toFlutterMap()
-
-        this.plugin.channel.invokeMethod(
-                "avIMClient_conversationEventHandler_onUnreadMessagesCountUpdated", data)
+        this.plugin.sendEvent(ChannelEvent.Success(hashMapOf(
+                "event" to "avIMClient_conversationEventHandler_onUnreadMessagesCountUpdated",
+                "data" to hashMapOf(
+                        "clientId" to client.clientId,
+                        "conversation" to conversation.toFlutterMap()
+                )
+        )))
     }
 }
 
@@ -103,12 +112,14 @@ private class MessageHandler(private val plugin: FlutterLeanCloudPlugin) : AVIMM
     override fun onMessage(message: AVIMMessage, conversation: AVIMConversation, client: AVIMClient) {
         super.onMessage(message, conversation, client)
 
-        val data = HashMap<String, Any?>()
-        data["clientId"] = client.clientId
-        data["message"] = message.toFlutterMap()
-        data["conversation"] = conversation.toFlutterMap()
-
-        this.plugin.channel.invokeMethod("avIMClient_messageHandler_onMessage", data)
+        this.plugin.sendEvent(ChannelEvent.Success(hashMapOf(
+                "event" to "avIMClient_messageHandler_onMessage",
+                "data" to hashMapOf(
+                        "clientId" to client.clientId,
+                        "message" to message.toFlutterMap(),
+                        "conversation" to conversation.toFlutterMap()
+                )
+        )))
     }
 }
 
